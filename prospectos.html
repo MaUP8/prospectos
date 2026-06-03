@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PBG · Prospectos</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=DM+Sans:opsz,wght@9..40,400..700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<style>
+  :root {
+    --garnet: #6B1B2D;
+    --garnet-deep: #4A0F1F;
+    --garnet-soft: #8B3A4D;
+    --bg: #FAF6F0;
+    --paper: #FFFFFF;
+    --ink: #1A1410;
+    --ink-soft: #4A3D35;
+    --mute: #8B7D72;
+    --rule: #E5DDD3;
+    --rule-strong: #1A1410;
+    --gold: #B8893A;
+    --shadow: 0 1px 0 rgba(26,20,16,0.04), 0 8px 24px rgba(26,20,16,0.06);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--ink);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* HEADER */
+  .topbar {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 3px solid var(--garnet);
+    flex-shrink: 0;
+  }
+
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-family: 'Fraunces', serif;
+  }
+
+  .brand-mark {
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: -0.02em;
+    color: var(--bg);
+  }
+
+  .brand-sep {
+    color: var(--garnet-soft);
+    font-size: 14px;
+  }
+
+  .brand-title {
+    font-style: italic;
+    font-weight: 400;
+    font-size: 15px;
+    color: var(--bg);
+    opacity: 0.9;
+  }
+
+  .vendor-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 4px 8px;
+    background: var(--garnet);
+    color: var(--bg);
+    border-radius: 2px;
+  }
+
+  /* MODE TABS */
+  .mode-tabs {
+    display: flex;
+    background: var(--bg);
+    border-bottom: 1px solid var(--rule);
+    flex-shrink: 0;
+  }
+
+  .mode-tab {
+    flex: 1;
+    padding: 10px 12px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--mute);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .mode-tab.active {
+    color: var(--garnet);
+    border-bottom-color: var(--garnet);
+  }
+
+  .mode-tab:not(.active):hover {
+    color: var(--ink);
+    background: rgba(0,0,0,0.02);
+  }
+
+  /* SEARCH BAR */
+  .search-row {
+    padding: 10px 12px;
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .search-input {
+    flex: 1;
+    padding: 9px 12px;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    background: var(--bg);
+    color: var(--ink);
+    outline: none;
+    transition: border 0.15s;
+  }
+
+  .search-input:focus {
+    border-color: var(--garnet);
+    background: var(--paper);
+  }
+
+  .btn {
+    padding: 9px 14px;
+    border: none;
+    border-radius: 2px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn-primary {
+    background: var(--garnet);
+    color: var(--bg);
+  }
+
+  .btn-primary:hover { background: var(--garnet-deep); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--rule-strong);
+  }
+
+  .btn-ghost:hover { background: var(--ink); color: var(--bg); }
+
+  .btn-icon {
+    width: 38px;
+    padding: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* MAP */
+  #map {
+    flex: 1;
+    min-height: 200px;
+    background: #ddd;
+    z-index: 1;
+  }
+
+  .leaflet-container {
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* FILTERS BAR */
+  .filters {
+    background: var(--paper);
+    border-top: 1px solid var(--rule);
+    padding: 8px 12px;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    flex-shrink: 0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .filters::-webkit-scrollbar { height: 0; }
+
+  .filter-chip {
+    padding: 6px 10px;
+    border: 1px solid var(--rule);
+    border-radius: 100px;
+    background: var(--bg);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .filter-chip.active {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+  }
+
+  .filter-chip:hover:not(.active) {
+    border-color: var(--ink);
+  }
+
+  /* RESULTS HEADER */
+  .results-header {
+    background: var(--paper);
+    border-top: 1px solid var(--rule);
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .results-count {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .results-count em {
+    font-style: italic;
+    color: var(--garnet);
+  }
+
+  .results-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--mute);
+  }
+
+  /* RESULTS LIST */
+  .results-wrap {
+    background: var(--paper);
+    overflow-y: auto;
+    max-height: 35vh;
+    flex-shrink: 0;
+    border-top: 1px solid var(--rule);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .salon-row {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--rule);
+    cursor: pointer;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    transition: background 0.1s;
+  }
+
+  .salon-row:hover, .salon-row.highlighted {
+    background: var(--bg);
+  }
+
+  .salon-row.highlighted {
+    border-left: 3px solid var(--garnet);
+    padding-left: 11px;
+  }
+
+  .salon-name {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 15px;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+
+  .salon-meta {
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.35;
+  }
+
+  .salon-meta .sep { color: var(--rule); margin: 0 4px; }
+
+  .salon-tags {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 5px;
+    background: var(--bg);
+    color: var(--ink-soft);
+    border-radius: 2px;
+  }
+
+  .tag-hair { background: #F4E8DC; color: #6B3E1A; }
+  .tag-nail { background: #F2DFE5; color: #7B2A47; }
+  .tag-barber { background: #D8DFE5; color: #1F3A55; }
+  .tag-beauty { background: #E8E0DC; color: #5A3F35; }
+
+  .salon-score {
+    text-align: right;
+    font-family: 'Fraunces', serif;
+  }
+
+  .score-value {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--garnet);
+    line-height: 1;
+  }
+
+  .score-reviews {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--mute);
+    margin-top: 2px;
+  }
+
+  /* EXPORT BAR */
+  .export-bar {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 10px 12px;
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .export-bar .btn-primary {
+    flex: 1;
+    background: var(--garnet);
+  }
+
+  .export-bar .btn-primary:hover { background: var(--garnet-soft); }
+
+  /* POPUP */
+  .leaflet-popup-content-wrapper {
+    border-radius: 2px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    padding: 0;
+  }
+
+  .leaflet-popup-content {
+    margin: 0;
+    padding: 14px;
+    min-width: 220px;
+  }
+
+  .popup-name {
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+
+  .popup-meta {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+
+  .popup-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .popup-actions a {
+    flex: 1;
+    text-align: center;
+    padding: 6px 8px;
+    background: var(--bg);
+    color: var(--ink);
+    text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 2px;
+    transition: all 0.15s;
+  }
+
+  .popup-actions a:hover { background: var(--garnet); color: var(--bg); }
+
+  /* CUSTOM MARKER */
+  .custom-marker {
+    background: var(--garnet);
+    width: 28px;
+    height: 28px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    border: 2px solid var(--bg);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .custom-marker.client { background: var(--gold); }
+  .custom-marker.prospect { background: var(--garnet); }
+  .custom-marker.here { background: #1F3A55; }
+
+  .custom-marker span {
+    transform: rotate(45deg);
+    color: var(--bg);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  /* EMPTY STATE */
+  .empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--mute);
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 16px;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ink);
+    color: var(--bg);
+    padding: 10px 16px;
+    border-radius: 2px;
+    font-size: 13px;
+    z-index: 9999;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    max-width: 90vw;
+    text-align: center;
+  }
+
+  .toast.show { opacity: 1; }
+
+  /* LOADING */
+  .loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26,20,16,0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9998;
+    color: var(--bg);
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 18px;
+  }
+
+  .loading-overlay.show { display: flex; }
+
+  .loading-overlay::after {
+    content: '';
+    width: 4px;
+    height: 4px;
+    background: var(--bg);
+    border-radius: 50%;
+    margin-left: 8px;
+    animation: dot 1.2s infinite;
+  }
+
+  @keyframes dot {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  /* RESPONSIVE: portrait mobile */
+  @media (max-width: 480px) {
+    .brand-title { display: none; }
+    #map { min-height: 35vh; }
+    .results-wrap { max-height: 30vh; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">PBG</span>
+    <span class="brand-sep">·</span>
+    <span class="brand-title">Prospectos en campo</span>
+  </div>
+  <span class="vendor-pill" id="vendorPill">VENDEDOR</span>
+</header>
+
+<div class="mode-tabs">
+  <button class="mode-tab active" data-mode="barrio">Buscar barrio</button>
+  <button class="mode-tab" data-mode="cerca">Cerca de mí</button>
+</div>
+
+<div class="search-row" id="searchRow">
+  <input type="text" class="search-input" id="searchInput" placeholder="Pocitos, Punta Carretas, Centro…" autocomplete="off">
+  <button class="btn btn-primary" id="searchBtn">Buscar</button>
+</div>
+
+<div id="map"></div>
+
+<div class="filters" id="filters">
+  <span class="filter-chip active" data-filter="tipo" data-value="all">Todos</span>
+  <span class="filter-chip" data-filter="tipo" data-value="Peluquería">Hair</span>
+  <span class="filter-chip" data-filter="tipo" data-value="Manicura">Nails</span>
+  <span class="filter-chip" data-filter="tipo" data-value="Barbería">Barber</span>
+  <span class="filter-chip" data-filter="tipo" data-value="Estética">Beauty</span>
+  <span style="border-left:1px solid var(--rule); margin: 0 4px;"></span>
+  <span class="filter-chip" data-filter="rating" data-value="4.5">★ 4.5+</span>
+  <span class="filter-chip" data-filter="rating" data-value="4.0">★ 4.0+</span>
+  <span class="filter-chip" data-filter="reviews" data-value="50">50+ reviews</span>
+  <span class="filter-chip" data-filter="reviews" data-value="100">100+ reviews</span>
+</div>
+
+<div class="results-header">
+  <div class="results-count">
+    <em id="resultCount">0</em> salones
+  </div>
+  <div class="results-meta" id="resultMeta">— cargando datos…</div>
+</div>
+
+<div class="results-wrap" id="resultsWrap">
+  <div class="empty">Cargando datos…</div>
+</div>
+
+<div class="export-bar">
+  <button class="btn btn-primary" id="exportBtn">Exportar PDF</button>
+  <button class="btn btn-ghost" id="sortBtn" style="color: var(--bg); border-color: var(--bg);">Ordenar</button>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="loading-overlay" id="loading">Generando PDF</div>
+
+<script>
+/* =========================================================================
+   CONFIG
+   ========================================================================= */
+const DATA_URL = './data.json';
+const DEFAULT_CENTER = [-34.9011, -56.1645]; // Montevideo
+const DEFAULT_ZOOM = 13;
+const NEARBY_RADIUS_KM = 3;
+
+/* =========================================================================
+   STATE
+   ========================================================================= */
+const state = {
+  mode: 'barrio',
+  data: [],
+  filtered: [],
+  filters: { tipo: 'all', rating: 0, reviews: 0 },
+  sortBy: 'rating',
+  userLocation: null,
+  markers: [],
+  hereMarker: null,
+  highlightedId: null,
+  vendedor: 'VENDEDOR',
+  searchQuery: '',
+  loaded: false,
+};
+
+/* =========================================================================
+   NORMALIZACIÓN — adapta Apify (compass/crawler-google-places) al shape interno
+   Tolera variaciones de nombres de campo entre versiones del actor.
+   ========================================================================= */
+function normalizeData(raw) {
+  if (!Array.isArray(raw)) {
+    console.error('data.json no es un array');
+    return [];
+  }
+
+  return raw
+    .map(r => {
+      // Coords pueden venir en r.location.{lat,lng} o r.{lat,lng}
+      const lat = r.location?.lat ?? r.lat ?? r.latitude;
+      const lng = r.location?.lng ?? r.lng ?? r.longitude;
+      if (typeof lat !== 'number' || typeof lng !== 'number') return null;
+
+      // Categoría: el actor a veces da categoryName, a veces array categories
+      const category = r.categoryName
+        || (Array.isArray(r.categories) && r.categories[0])
+        || r.category
+        || 'Sin categoría';
+
+      // Teléfono: phone o phoneUnformatted
+      const phone = r.phone || r.phoneUnformatted || '';
+
+      // Barrio: a veces explícito, a veces hay que sacarlo del address
+      const neighborhood = r.neighborhood || r.city || r.locality || '';
+
+      return {
+        title: r.title || r.name || 'Sin nombre',
+        address: r.address || r.street || '',
+        neighborhood,
+        phone,
+        website: r.website || r.url_website || '',
+        totalScore: Number(r.totalScore ?? r.rating ?? 0),
+        reviewsCount: Number(r.reviewsCount ?? r.userRatingCount ?? 0),
+        categoryName: category,
+        location: { lat, lng },
+        url: r.url || r.googleMapsUrl || `https://maps.google.com/?q=${lat},${lng}`,
+      };
+    })
+    .filter(Boolean);
+}
+
+/* =========================================================================
+   URL PARAMS (integración con AppSheet)
+   ========================================================================= */
+function parseParams() {
+  const params = new URLSearchParams(window.location.search);
+  const vendedor = params.get('vendedor');
+  const modo = params.get('modo');
+  const zona = params.get('zona');
+
+  if (vendedor) {
+    state.vendedor = vendedor.replace(/_/g, ' ').toUpperCase();
+    document.getElementById('vendorPill').textContent = state.vendedor;
+  }
+  if (modo === 'cerca') {
+    switchMode('cerca');
+  }
+  if (zona) {
+    document.getElementById('searchInput').value = zona;
+    state.searchQuery = zona;
+    setTimeout(() => doSearch(), 300);
+  }
+}
+
+/* =========================================================================
+   MAP SETUP
+   ========================================================================= */
+const map = L.map('map', { zoomControl: true, attributionControl: true })
+  .setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap, © CARTO',
+  maxZoom: 19,
+}).addTo(map);
+
+function makeIcon(type='prospect', label='') {
+  return L.divIcon({
+    className: '',
+    html: `<div class="custom-marker ${type}"><span>${label}</span></div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 28],
+  });
+}
+
+/* =========================================================================
+   RENDERING
+   ========================================================================= */
+function clearMarkers() {
+  state.markers.forEach(m => map.removeLayer(m));
+  state.markers = [];
+}
+
+function renderMarkers(salons) {
+  clearMarkers();
+  salons.forEach((s, idx) => {
+    const marker = L.marker([s.location.lat, s.location.lng], {
+      icon: makeIcon('prospect', idx + 1)
+    }).addTo(map);
+
+    const popup = `
+      <div class="popup-name">${escapeHtml(s.title)}</div>
+      <div class="popup-meta">${escapeHtml(s.address)}<br>★ ${s.totalScore} · ${s.reviewsCount} reviews</div>
+      <div class="popup-actions">
+        ${s.phone ? `<a href="tel:${s.phone.replace(/\s/g,'')}">Llamar</a>` : ''}
+        <a href="${s.url}" target="_blank" rel="noopener">Cómo llegar</a>
+      </div>
+    `;
+    marker.bindPopup(popup);
+    marker.on('click', () => highlightSalon(idx));
+    state.markers.push(marker);
+  });
+
+  if (salons.length > 0) {
+    const all = [...state.markers];
+    if (state.hereMarker) all.push(state.hereMarker);
+    const group = L.featureGroup(all);
+    map.fitBounds(group.getBounds().pad(0.15));
+  }
+}
+
+function escapeHtml(str) {
+  return String(str || '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+function tagClassFor(cat) {
+  const c = (cat || '').toLowerCase();
+  if (c.includes('peluq') || c.includes('hair')) return 'tag-hair';
+  if (c.includes('manic') || c.includes('uña') || c.includes('nail')) return 'tag-nail';
+  if (c.includes('barb')) return 'tag-barber';
+  if (c.includes('estét') || c.includes('beauty') || c.includes('spa')) return 'tag-beauty';
+  return '';
+}
+
+function renderList(salons) {
+  const wrap = document.getElementById('resultsWrap');
+  document.getElementById('resultCount').textContent = salons.length;
+
+  if (!state.loaded) {
+    wrap.innerHTML = '<div class="empty">Cargando datos…</div>';
+    return;
+  }
+  if (salons.length === 0) {
+    const hint = state.mode === 'barrio' && !state.searchQuery
+      ? 'Buscá un barrio para empezar'
+      : 'Sin resultados';
+    wrap.innerHTML = `<div class="empty">${hint}</div>`;
+    return;
+  }
+
+  wrap.innerHTML = salons.map((s, idx) => `
+    <div class="salon-row" data-idx="${idx}">
+      <div>
+        <div class="salon-name">${idx + 1}. ${escapeHtml(s.title)}</div>
+        <div class="salon-meta">${escapeHtml(s.address)}${s.phone ? ` <span class="sep">·</span> ${escapeHtml(s.phone)}` : ''}</div>
+        <div class="salon-tags">
+          <span class="tag ${tagClassFor(s.categoryName)}">${escapeHtml(s.categoryName)}</span>
+          ${s.neighborhood ? `<span class="tag">${escapeHtml(s.neighborhood)}</span>` : ''}
+          ${s.distanceKm !== undefined ? `<span class="tag">${s.distanceKm.toFixed(1)} km</span>` : ''}
+        </div>
+      </div>
+      <div class="salon-score">
+        <div class="score-value">${s.totalScore.toFixed(1)}</div>
+        <div class="score-reviews">${s.reviewsCount} rev.</div>
+      </div>
+    </div>
+  `).join('');
+
+  wrap.querySelectorAll('.salon-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const idx = parseInt(row.dataset.idx);
+      highlightSalon(idx);
+      const s = state.filtered[idx];
+      map.setView([s.location.lat, s.location.lng], 16);
+      state.markers[idx]?.openPopup();
+    });
+  });
+}
+
+function highlightSalon(idx) {
+  state.highlightedId = idx;
+  document.querySelectorAll('.salon-row').forEach((r, i) => {
+    r.classList.toggle('highlighted', i === idx);
+  });
+  const row = document.querySelector(`.salon-row[data-idx="${idx}"]`);
+  if (row) row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/* =========================================================================
+   FILTERING & SORTING
+   ========================================================================= */
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function applyFilters() {
+  let result = [...state.data];
+
+  if (state.mode === 'cerca' && state.userLocation) {
+    result.forEach(s => {
+      s.distanceKm = haversine(state.userLocation.lat, state.userLocation.lng, s.location.lat, s.location.lng);
+    });
+    result = result.filter(s => s.distanceKm <= NEARBY_RADIUS_KM);
+  } else if (state.mode === 'barrio' && state.searchQuery) {
+    const q = state.searchQuery.toLowerCase().trim();
+    result = result.filter(s =>
+      (s.neighborhood || '').toLowerCase().includes(q) ||
+      (s.address || '').toLowerCase().includes(q) ||
+      (s.title || '').toLowerCase().includes(q)
+    );
+  } else if (state.mode === 'barrio' && !state.searchQuery) {
+    result = [];
+  }
+
+  if (state.filters.tipo !== 'all') {
+    const t = state.filters.tipo.toLowerCase();
+    result = result.filter(s => (s.categoryName || '').toLowerCase().includes(t));
+  }
+  if (state.filters.rating > 0) {
+    result = result.filter(s => s.totalScore >= state.filters.rating);
+  }
+  if (state.filters.reviews > 0) {
+    result = result.filter(s => s.reviewsCount >= state.filters.reviews);
+  }
+
+  if (state.sortBy === 'distance' && state.mode === 'cerca') {
+    result.sort((a, b) => a.distanceKm - b.distanceKm);
+  } else if (state.sortBy === 'rating') {
+    result.sort((a, b) => b.totalScore - a.totalScore || b.reviewsCount - a.reviewsCount);
+  } else if (state.sortBy === 'reviews') {
+    result.sort((a, b) => b.reviewsCount - a.reviewsCount);
+  } else if (state.sortBy === 'name') {
+    result.sort((a, b) => a.title.localeCompare(b.title));
+  }
+
+  state.filtered = result;
+  updateMeta();
+  renderMarkers(result);
+  renderList(result);
+}
+
+function updateMeta() {
+  if (!state.loaded) {
+    document.getElementById('resultMeta').textContent = '— cargando datos…';
+    return;
+  }
+  const labels = {
+    rating: 'orden: rating',
+    reviews: 'orden: reviews',
+    distance: 'orden: distancia',
+    name: 'orden: A-Z',
+  };
+  document.getElementById('resultMeta').textContent = '— ' + labels[state.sortBy];
+}
+
+/* =========================================================================
+   MODE & SEARCH
+   ========================================================================= */
+function switchMode(mode) {
+  state.mode = mode;
+  document.querySelectorAll('.mode-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.mode === mode);
+  });
+
+  const searchRow = document.getElementById('searchRow');
+  if (mode === 'cerca') {
+    searchRow.style.display = 'none';
+    state.sortBy = 'distance';
+    requestLocation();
+  } else {
+    searchRow.style.display = 'flex';
+    if (state.hereMarker) { map.removeLayer(state.hereMarker); state.hereMarker = null; }
+    state.userLocation = null;
+    state.sortBy = 'rating';
+    applyFilters();
+  }
+}
+
+function requestLocation() {
+  if (!navigator.geolocation) {
+    toast('Geolocalización no disponible');
+    return;
+  }
+  toast('Obteniendo ubicación…');
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      state.userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      if (state.hereMarker) map.removeLayer(state.hereMarker);
+      const hereIcon = L.divIcon({
+        className: '',
+        html: `<div class="custom-marker here"><span>★</span></div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 28],
+      });
+      state.hereMarker = L.marker([state.userLocation.lat, state.userLocation.lng], { icon: hereIcon }).addTo(map);
+      map.setView([state.userLocation.lat, state.userLocation.lng], 15);
+      applyFilters();
+    },
+    (err) => {
+      toast('No se pudo obtener ubicación');
+      console.error(err);
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+
+function doSearch() {
+  state.searchQuery = document.getElementById('searchInput').value.trim();
+  applyFilters();
+}
+
+/* =========================================================================
+   PDF EXPORT
+   ========================================================================= */
+async function exportPDF() {
+  if (state.filtered.length === 0) {
+    toast('No hay salones para exportar');
+    return;
+  }
+
+  const loading = document.getElementById('loading');
+  loading.classList.add('show');
+
+  try {
+    await new Promise(r => setTimeout(r, 300));
+    const mapEl = document.getElementById('map');
+    const canvas = await html2canvas(mapEl, {
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      backgroundColor: '#FAF6F0',
+    });
+    const mapImg = canvas.toDataURL('image/jpeg', 0.85);
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const margin = 14;
+
+    // HEADER
+    doc.setFillColor(26, 20, 16);
+    doc.rect(0, 0, pageW, 22, 'F');
+    doc.setFillColor(107, 27, 45);
+    doc.rect(0, 22, pageW, 1.5, 'F');
+
+    doc.setTextColor(250, 246, 240);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text('PBG', margin, 13);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text('· Listado de prospectos', margin + 12, 13);
+
+    doc.setFontSize(8);
+    const fecha = new Date().toLocaleString('es-UY', { dateStyle: 'short', timeStyle: 'short' });
+    doc.text(`${state.vendedor}  ·  ${fecha}`, pageW - margin, 13, { align: 'right' });
+
+    // CONTEXTO
+    doc.setTextColor(60, 50, 45);
+    doc.setFontSize(9);
+    let contextLine = '';
+    if (state.mode === 'cerca' && state.userLocation) {
+      contextLine = `Modo: cerca de mí (radio ${NEARBY_RADIUS_KM} km)`;
+    } else if (state.searchQuery) {
+      contextLine = `Búsqueda: "${state.searchQuery}"`;
+    }
+    if (state.filters.tipo !== 'all') contextLine += `  ·  Tipo: ${state.filters.tipo}`;
+    if (state.filters.rating > 0) contextLine += `  ·  Rating ≥ ${state.filters.rating}`;
+    if (state.filters.reviews > 0) contextLine += `  ·  Reviews ≥ ${state.filters.reviews}`;
+    doc.text(contextLine, margin, 30);
+    doc.setFontSize(11);
+    doc.setTextColor(107, 27, 45);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${state.filtered.length} salones`, pageW - margin, 30, { align: 'right' });
+
+    // MAPA
+    const mapW = pageW - margin * 2;
+    const mapH = mapW * (canvas.height / canvas.width);
+    const mapHCapped = Math.min(mapH, 85);
+    doc.addImage(mapImg, 'JPEG', margin, 34, mapW, mapHCapped);
+
+    // TABLA
+    const tableStartY = 34 + mapHCapped + 6;
+    const rows = state.filtered.map((s, i) => [
+      i + 1,
+      s.title,
+      s.address,
+      s.phone || '—',
+      s.totalScore.toFixed(1),
+      s.reviewsCount,
+      s.categoryName,
+      state.mode === 'cerca' && s.distanceKm !== undefined ? s.distanceKm.toFixed(1) + ' km' : (s.neighborhood || '—'),
+    ]);
+
+    doc.autoTable({
+      startY: tableStartY,
+      head: [['#', 'Salón', 'Dirección', 'Teléfono', '★', 'Rev.', 'Tipo', state.mode === 'cerca' ? 'Dist.' : 'Barrio']],
+      body: rows,
+      theme: 'plain',
+      styles: {
+        font: 'helvetica',
+        fontSize: 8,
+        cellPadding: 2,
+        lineColor: [229, 221, 211],
+        lineWidth: 0.1,
+        textColor: [26, 20, 16],
+      },
+      headStyles: {
+        fillColor: [26, 20, 16],
+        textColor: [250, 246, 240],
+        fontStyle: 'bold',
+        fontSize: 8,
+        cellPadding: 3,
+      },
+      alternateRowStyles: { fillColor: [250, 246, 240] },
+      columnStyles: {
+        0: { cellWidth: 7, halign: 'center' },
+        1: { cellWidth: 38, fontStyle: 'bold' },
+        2: { cellWidth: 48 },
+        3: { cellWidth: 26 },
+        4: { cellWidth: 9, halign: 'center', textColor: [107, 27, 45], fontStyle: 'bold' },
+        5: { cellWidth: 11, halign: 'center' },
+        6: { cellWidth: 18 },
+        7: { cellWidth: 'auto' },
+      },
+      didDrawPage: (data) => {
+        const pH = doc.internal.pageSize.getHeight();
+        doc.setFontSize(7);
+        doc.setTextColor(139, 125, 114);
+        doc.text(`PBG · Prospectos en campo · ${state.vendedor}`, margin, pH - 6);
+        doc.text(`Página ${data.pageNumber}`, pageW - margin, pH - 6, { align: 'right' });
+      },
+    });
+
+    const zona = state.searchQuery || (state.mode === 'cerca' ? 'cerca' : 'general');
+    const safeZona = zona.replace(/[^a-zA-Z0-9]/g, '_');
+    const safeVendor = state.vendedor.replace(/[^a-zA-Z0-9]/g, '_');
+    const filename = `PBG_prospectos_${safeVendor}_${safeZona}_${new Date().toISOString().slice(0,10)}.pdf`;
+    doc.save(filename);
+    toast('PDF generado');
+  } catch (e) {
+    console.error(e);
+    toast('Error al generar PDF');
+  } finally {
+    loading.classList.remove('show');
+  }
+}
+
+/* =========================================================================
+   UI BINDINGS
+   ========================================================================= */
+document.querySelectorAll('.mode-tab').forEach(tab => {
+  tab.addEventListener('click', () => switchMode(tab.dataset.mode));
+});
+
+document.getElementById('searchBtn').addEventListener('click', doSearch);
+document.getElementById('searchInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') doSearch();
+});
+
+document.getElementById('filters').addEventListener('click', (e) => {
+  const chip = e.target.closest('.filter-chip');
+  if (!chip) return;
+
+  const filter = chip.dataset.filter;
+  const value = chip.dataset.value;
+
+  if (filter === 'tipo') {
+    document.querySelectorAll('[data-filter="tipo"]').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    state.filters.tipo = value;
+  } else if (filter === 'rating') {
+    const isActive = chip.classList.contains('active');
+    document.querySelectorAll('[data-filter="rating"]').forEach(c => c.classList.remove('active'));
+    if (!isActive) {
+      chip.classList.add('active');
+      state.filters.rating = parseFloat(value);
+    } else {
+      state.filters.rating = 0;
+    }
+  } else if (filter === 'reviews') {
+    const isActive = chip.classList.contains('active');
+    document.querySelectorAll('[data-filter="reviews"]').forEach(c => c.classList.remove('active'));
+    if (!isActive) {
+      chip.classList.add('active');
+      state.filters.reviews = parseInt(value);
+    } else {
+      state.filters.reviews = 0;
+    }
+  }
+  applyFilters();
+});
+
+document.getElementById('exportBtn').addEventListener('click', exportPDF);
+
+document.getElementById('sortBtn').addEventListener('click', () => {
+  const options = state.mode === 'cerca'
+    ? ['distance', 'rating', 'reviews', 'name']
+    : ['rating', 'reviews', 'name'];
+  const current = options.indexOf(state.sortBy);
+  state.sortBy = options[(current + 1) % options.length];
+  applyFilters();
+});
+
+/* =========================================================================
+   TOAST
+   ========================================================================= */
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+/* =========================================================================
+   INIT — carga data.json y arranca
+   ========================================================================= */
+async function init() {
+  try {
+    const res = await fetch(DATA_URL, { cache: 'no-cache' });
+    if (!res.ok) throw new Error(`HTTP ${res.status} al cargar ${DATA_URL}`);
+    const raw = await res.json();
+    state.data = normalizeData(raw);
+    state.loaded = true;
+
+    if (state.data.length === 0) {
+      toast('data.json vacío o con formato inesperado');
+    } else {
+      toast(`${state.data.length} salones cargados`);
+    }
+
+    parseParams();
+    applyFilters();
+  } catch (e) {
+    console.error(e);
+    state.loaded = true; // marca como cargado para mostrar mensaje correcto
+    const hint = location.protocol === 'file:'
+      ? 'Abrí desde un servidor (no file://) — fetch no funciona local sin server'
+      : 'Verificá que data.json esté junto al index.html';
+    document.getElementById('resultsWrap').innerHTML =
+      `<div class="empty">No se pudo cargar data.json<br><small style="font-size:12px; opacity:0.7">${hint}</small></div>`;
+    document.getElementById('resultMeta').textContent = '— error de carga';
+    toast('Error: no se pudo cargar data.json');
+  }
+}
+
+init();
+</script>
+</body>
+</html>
